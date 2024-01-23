@@ -1,0 +1,38 @@
+{
+  "type": "scaffold",
+  "args": {
+    "appBar": {
+      "type": "app_bar",
+      "args": {
+        "title": {
+          "type": "text",
+          "args": {
+            "text": "JS"
+          }
+        }
+      }
+    },
+    "body": {
+      "type": "list_view",
+      "args": {
+        "children": [
+          {
+            "type": "padding",
+            "args": {
+              "child": {
+                "type": "text",
+                "args": {
+                  "text": "${'Today is ' + js('new Date().toString()')}"
+                }
+              },
+              "padding": [
+                16.0,
+                8.0
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
