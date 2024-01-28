@@ -1,13 +1,15 @@
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
+import 'package:json_dynamic_widget_plugin_components/src/models/component_spec.dart';
 import 'package:version/version.dart';
-import '../loaders/component_template_loader.dart';
+import '../loaders/component_spec_loader.dart';
 
 /// Loads the component based on the JSON structure.
 class JsonComponentBuilder extends JsonWidgetBuilder {
   const JsonComponentBuilder({
     required super.args,
     required this.name,
-    required this.values,
+    required this.inputs,
+    required this.outputs,
     this.version,
     this.callerRegistry,
   });
@@ -15,7 +17,8 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
   final JsonWidgetRegistry? callerRegistry;
   final String name;
   final Version? version;
-  final Map<String, dynamic> values;
+  final Map<String, dynamic> inputs;
+  final Map<String, String> outputs;
 
   @override
   JsonWidgetBuilderModel createModel({
@@ -23,7 +26,7 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
     required JsonWidgetData data,
   }) =>
       throw UnsupportedError(
-        'The components widget is too complex to support auto-encoding',
+        'The component widget is too complex to support auto-encoding',
       );
 
   @override
@@ -37,7 +40,8 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
     return _Component(
       name: name,
       version: version,
-      values: values,
+      inputs: inputs,
+      outputs: outputs,
       callerRegistry: callerRegistry,
       componentRegistry: callerRegistry.copyWith(values: {}),
     );
@@ -54,7 +58,7 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
 
     if (result == null) {
       throw Exception(
-        '[JsonComponentsBuilder]: requested to parse from dynamic, but the input is null.',
+        '[JsonComponentBuilder]: requested to parse from dynamic, but the input is null.',
       );
     }
 
@@ -65,17 +69,18 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
 
   static const nameKey = 'name';
   static const versionKey = 'version';
-  static const valuesKey = 'values';
+  static const inputsKey = 'inputs';
+  static const outputsKey = 'outputs';
 
   /// Builds the builder from a Map-like dynamic structure. This expects the
   /// JSON format to be of the following structure:
   ///
   /// ```json
   /// {
-  ///   "id": "<String>",
   ///   "name": "<String>",
   ///   "version": "<String>"
-  ///   "variables": "<Object>"
+  ///   "inputs": "<Object>"
+  ///   "outputs": "<Object>"
   /// }
   /// ```
   ///
@@ -94,13 +99,15 @@ class JsonComponentBuilder extends JsonWidgetBuilder {
       if (map[versionKey] != null) {
         version = Version.parse(map[versionKey]);
       }
-      final variables = Map<String, dynamic>.from(map[valuesKey] ?? {});
+      final inputs = Map<String, dynamic>.from(map[inputsKey] ?? {});
+      final outputs = Map<String, String>.from(map[outputsKey] ?? {});
 
       result = JsonComponentBuilder(
         args: map,
         name: name,
         version: version,
-        values: variables,
+        inputs: inputs,
+        outputs: outputs,
         callerRegistry: registry,
       );
     }
@@ -115,14 +122,16 @@ class _Component extends StatefulWidget {
   const _Component({
     required this.name,
     required this.version,
-    required this.values,
+    required this.inputs,
+    required this.outputs,
     required this.callerRegistry,
     required this.componentRegistry,
   });
 
   final String name;
   final Version? version;
-  final Map<String, dynamic> values;
+  final Map<String, dynamic> inputs;
+  final Map<String, String> outputs;
   final JsonWidgetRegistry callerRegistry;
   final JsonWidgetRegistry componentRegistry;
 
@@ -150,38 +159,46 @@ class _ComponentState extends State<_Component> {
   }
 
   Future<void> _loadComponent(BuildContext context) async {
-    final loader = ComponentTemplateLoader.get();
+    final loader = ComponentSpecLoader.get();
 
-    final componentTemplate = await loader.load(
+    final componentSpec = await loader.load(
         context, widget.callerRegistry, widget.name, widget.version);
 
-    final values = <String, dynamic>{};
-    for (var supportedValue in componentTemplate.values) {
-      var value = supportedValue.defaultValue ?? '';
-      if (widget.values.containsKey(supportedValue.name)) {
-        value = widget.values[supportedValue.name]!;
-      }
-      values[supportedValue.name] = value;
-    }
-    final processedValues = Map<String, dynamic>.from(
-      widget.callerRegistry.processArgs(values, null).value,
-    );
+    final inputs = _prepareInputs(componentSpec.inputs);
+    final processedInputs = widget.callerRegistry.processArgs(inputs, null);
 
-    processedValues.forEach((key, value) {
+    Map<String, dynamic>.from(processedInputs.value).forEach((key, value) {
       widget.componentRegistry.setValue(key, value);
     });
 
+    processedInputs.jsonWidgetListenVariables.forEach((inputVariable) => 
+      // widget.callerRegistry.valueStream.
+    )
+
     setState(
-      () => _componentData = JsonWidgetData.fromDynamic(
-          componentTemplate.content,
+      () => _componentData = JsonWidgetData.fromDynamic(componentSpec.content,
           registry: widget.componentRegistry),
     );
+  }
+
+  // Prepares the inputs based on the input definitions in the component.
+  Map<String, dynamic> _prepareInputs(List<InputSpec> inputSpecs) {
+    final inputs = <String, dynamic>{};
+    // filter out inputs that are not defined in the component
+    for (var inputSpec in inputSpecs) {
+      var value = inputSpec.defaultValue ?? '';
+      if (widget.inputs.containsKey(inputSpec.name)) {
+        value = widget.inputs[inputSpec.name]!;
+      }
+      inputs[inputSpec.name] = value;
+    }
+    return inputs;
   }
 }
 
 class ComponentSchema {
   static const id =
-      'https://peiffer-innovations.github.io/flutter_json_schemas/schemas/json_dynamic_plugin_components/dynamic.json';
+      'https://peiffer-innovations.github.io/flutter_json_schemas/schemas/json_dynamic_plugin_components/component.json';
 
   static final schema = {
     r'$schema': 'http://json-schema.org/draft-07/schema#',

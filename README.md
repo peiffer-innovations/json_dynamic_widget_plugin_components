@@ -44,20 +44,24 @@ Currently supported loaders:
 
 ### Component values encapsulation
 Each component can have it's own values. Because of that we need to handle the issue of the name collision.
-That's why each component have it's own registry.
+
+Each component have it's own, separate registry. Each component allow to define it's own inputs and outputs:
+* `inputs` - the input variables of the component, that are available for the component registry. Not passing any values on caller side means that the default values will be used.
+* `outputs` - the output variables of the component, that can be exported to caller registry. Not passing any values means on caller side means that specific variable is not exported to the caller registry.
 
 For e.g.
 ```
 "type": "component",
 "args": {
     "name": "header",
-    "values": {
-      "text": "Some centered text"
+    "inputs": {
+      "text": "Some text for the header"
+    },
+    "outputs": {
+        "header_click_count" : "header1_click_count"
     }
 }
 ```
-
-<!-- TODO Rethink the idea of exporting values from the component -->
 
 ### Versioning
 Each component is versioned and placed in the following path:
@@ -108,26 +112,57 @@ void main() {
 2. Create the JSON file with component data and place it in `{components_path}/{component_name}/{version}.json`.
 
 ```
-// {components_path}/centered_text/1.0.0.json
+// {components_path}/custom_text_input/1.0.0.json
 {
-    "name": "centered_text",
+    "name": "custom_text_input",
     "version": "1.0.0",
-    "values": [
+    "inputs": [
         {
-            "name": "text",
-            "description": "The centered text value.",
+            "name": "label",
+            "description": "The text input label",
+            "defaultValue": ""
+        },
+                {
+            "name": "hint",
+            "description": "The text input hint",
             "defaultValue": ""
         }
     ],
+    "outputs": [
+        {
+            "name": "text_input",
+            "description": "The text input value"
+        },
+    ],
     "content": {
-        "type": "center",
+        "type": "text_form_field",
+        "id": "text_input",
         "args": {
-            "child": {
-                "type": "text",
-                "args": {
-                    "text": "${text}"
+            "decoration": {
+                "hintText": "${hint}",
+                "labelText": "${label}",
+                "suffixIcon": {
+                    "type": "icon_button",
+                    "args": {
+                        "icon": {
+                            "type": "icon",
+                            "args": {
+                                "icon": {
+                                    "codePoint": 57704,
+                                    "fontFamily": "MaterialIcons",
+                                    "size": 50
+                                }
+                            }
+                        },
+                        "onPressed": "${set_value('text_input','')}"
+                    }
                 }
-            }
+            },
+            "validators": [
+                {
+                    "type": "required"
+                }
+            ]
         }
     }
 }
@@ -138,10 +173,14 @@ void main() {
 ```
 "type": "component",
 "args": {
-    "name": "centered_text",
+    "name": "custom_text_input",
     "version": "1.0.0", 
-    "values": {
-      "text": "Some centered text"
+    "inputs": {
+        "label": "First name",
+        "hind": "John"
+    },
+    "outputs": {
+        "text_input": "first_name_input_value"
     }
 }
 ```

@@ -3,40 +3,40 @@ import 'dart:convert';
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:version/version.dart';
 
-import '../models/component_template.dart';
-import 'component_template_loader.dart';
+import '../models/component_spec.dart';
+import 'component_spec_loader.dart';
 
-class AssetComponentTemplateLoader implements ComponentTemplateLoader {
-  AssetComponentTemplateLoader(this.basePath);
+class AssetComponentSpecLoader implements ComponentSpecLoader {
+  AssetComponentSpecLoader(this.basePath);
 
   final String basePath;
 
   @override
-  Future<ComponentTemplate> load(
+  Future<ComponentSpec> load(
     BuildContext context,
     JsonWidgetRegistry? registry,
     String componentName,
     Version? version,
   ) async {
     final assetBundle = DefaultAssetBundle.of(context);
-    final componentTemplateStr = await assetBundle.loadString(basePath);
-    final componentTemplateMap =
-        json.decode(componentTemplateStr) as Map<String, dynamic>;
-    final componentTemplate =
-        ComponentTemplate.fromJson(componentTemplateMap, registry);
+    final componentSpecStr = await assetBundle.loadString(basePath);
+    final componentSpecMap =
+        json.decode(componentSpecStr) as Map<String, dynamic>;
+    final componentSpec =
+        ComponentSpec.fromJson(componentSpecMap, registry);
 
-    var version = componentTemplate.version;
+    var version = componentSpec.version;
     version ??= await _getLatestVersion(assetBundle, componentName);
 
     if (version == null) {
       throw Exception('Component: $componentName not found');
     }
 
-    return ComponentTemplate(
-      name: componentTemplate.name,
+    return ComponentSpec(
+      name: componentSpec.name,
       version: version,
-      values: componentTemplate.values,
-      content: componentTemplate.content,
+      inputs: componentSpec.inputs,
+      content: componentSpec.content,
     );
   }
 
