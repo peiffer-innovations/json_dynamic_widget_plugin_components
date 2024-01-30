@@ -4,6 +4,7 @@ import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:version/version.dart';
 
 import '../models/component_spec.dart';
+import 'package:path/path.dart' as Path;
 import 'component_spec_loader.dart';
 
 class AssetComponentSpecLoader implements ComponentSpecLoader {
@@ -19,25 +20,21 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
     Version? version,
   ) async {
     final assetBundle = DefaultAssetBundle.of(context);
-    final componentSpecStr = await assetBundle.loadString(basePath);
-    final componentSpecMap =
-        json.decode(componentSpecStr) as Map<String, dynamic>;
-    final componentSpec =
-        ComponentSpec.fromJson(componentSpecMap, registry);
 
-    var version = componentSpec.version;
     version ??= await _getLatestVersion(assetBundle, componentName);
 
     if (version == null) {
       throw Exception('Component: $componentName not found');
     }
 
-    return ComponentSpec(
-      name: componentSpec.name,
-      version: version,
-      inputs: componentSpec.inputs,
-      content: componentSpec.content,
-    );
+    final componentSpecStr = await assetBundle.loadString(Path.join(
+      basePath,
+      componentName,
+      '${version.toString()}.json',
+    ));
+    final componentSpecMap =
+        json.decode(componentSpecStr) as Map<String, dynamic>;
+    return ComponentSpec.fromJson(componentSpecMap, registry);
   }
 
   Future<Version?> _getLatestVersion(

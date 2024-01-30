@@ -22,6 +22,11 @@ class ComponentSpec extends JsonClass {
               .map((e) => InputSpec.fromJson(e))
               .toList()
           : [],
+      outputs: json[outputsKey] != null
+          ? (json[outputsKey] as List<dynamic>)
+              .map((e) => OutputSpec.fromJson(e))
+              .toList()
+          : [],
       content: Map<String, dynamic>.from(json[contentKey]),
     );
   }

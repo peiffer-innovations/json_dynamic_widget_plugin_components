@@ -19,13 +19,16 @@ void main() async {
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
-  final registry = JsonWidgetRegistry.instance;
-  JsonJsPlugin.bind(registry);
+  final registry =
+      JsonWidgetRegistry.instance.copyWith(disableValidation: true);
+  JsonComponentsPlugin.bind(
+      registry, AssetComponentSpecLoader('assets/components'));
 
   registry.navigatorKey = navigatorKey;
 
   final data = JsonWidgetData.fromDynamic(
-    json.decode(await rootBundle.loadString('assets/pages/js.json')),
+    json.decode(await rootBundle.loadString('assets/pages/components.json')),
+    registry: registry,
   );
 
   runApp(

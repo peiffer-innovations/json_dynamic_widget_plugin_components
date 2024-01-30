@@ -1,0 +1,44 @@
+{
+  "type": "scaffold",
+  "args": {
+    "appBar": {
+      "type": "app_bar",
+      "args": {
+        "title": {
+          "type": "text",
+          "args": {
+            "text": "Components example"
+          }
+        }
+      }
+    },
+    "body": {
+      "type": "column",
+      "args": {
+        "mainAxisSize": "min",
+        "children": [
+          {
+            "type": "component",
+            "args": {
+              "name": "custom_text_input",
+              "version": "1.0.0",
+              "inputs": {
+                "label": "First name",
+                "hint": ""
+              },
+              "outputs": {
+                "textInput": "firstNameValue"
+              }
+            }
+          },
+          {
+            "type": "text",
+            "args": {
+              "text": "${'Exported first name from component: ' +  firstNameValue ?? ''}"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

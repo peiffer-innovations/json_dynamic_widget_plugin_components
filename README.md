@@ -132,7 +132,7 @@ void main() {
         {
             "name": "text_input",
             "description": "The text input value"
-        },
+        }
     ],
     "content": {
         "type": "text_form_field",

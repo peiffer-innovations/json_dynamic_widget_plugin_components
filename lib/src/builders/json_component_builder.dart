@@ -1,139 +1,62 @@
+import 'dart:async';
+
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:json_dynamic_widget_plugin_components/src/models/component_spec.dart';
 import 'package:version/version.dart';
 import '../loaders/component_spec_loader.dart';
 
+part 'json_component_builder.g.dart';
+
 /// Loads the component based on the JSON structure.
-class JsonComponentBuilder extends JsonWidgetBuilder {
-  const JsonComponentBuilder({
+@jsonWidget
+abstract class _JsonComponentBuilder extends JsonWidgetBuilder {
+  const _JsonComponentBuilder({
     required super.args,
-    required this.name,
-    required this.inputs,
-    required this.outputs,
-    this.version,
-    this.callerRegistry,
   });
 
-  final JsonWidgetRegistry? callerRegistry;
-  final String name;
-  final Version? version;
-  final Map<String, dynamic> inputs;
-  final Map<String, String> outputs;
+  @JsonArgDecoder('version')
+  Version? _decodeVersion({required dynamic value}) =>
+      value != null && value != '' ? Version.parse(value) : null;
+
+  @JsonArgEncoder('version')
+  static String _encodeVersion(Version? version) => version?.toString() ?? '';
+
+  @JsonArgDecoder('inputs')
+  Map<String, dynamic> _decodeInputs({required dynamic value}) =>
+      value == null ? {} : Map<String, dynamic>.from(value);
+
+  @JsonArgDecoder('outputs')
+  Map<String, String> _decodeOutputs({required dynamic value}) =>
+      value == null ? {} : Map<String, String>.from(value);
 
   @override
-  JsonWidgetBuilderModel createModel({
-    ChildWidgetBuilder? childBuilder,
-    required JsonWidgetData data,
-  }) =>
-      throw UnsupportedError(
-        'The component widget is too complex to support auto-encoding',
-      );
-
-  @override
-  Widget buildCustom({
+  _Component buildCustom({
     ChildWidgetBuilder? childBuilder,
     required BuildContext context,
     required JsonWidgetData data,
     Key? key,
-  }) {
-    final callerRegistry = this.callerRegistry ?? JsonWidgetRegistry.instance;
-    return _Component(
-      name: name,
-      version: version,
-      inputs: inputs,
-      outputs: outputs,
-      callerRegistry: callerRegistry,
-      componentRegistry: callerRegistry.copyWith(values: {}),
-    );
-  }
-
-  static JsonComponentBuilder fromDynamic(
-    dynamic map, {
-    JsonWidgetRegistry? registry,
-  }) {
-    final result = maybeFromDynamic(
-      map,
-      registry: registry,
-    );
-
-    if (result == null) {
-      throw Exception(
-        '[JsonComponentBuilder]: requested to parse from dynamic, but the input is null.',
-      );
-    }
-
-    return result;
-  }
-
-  static const kType = 'component';
-
-  static const nameKey = 'name';
-  static const versionKey = 'version';
-  static const inputsKey = 'inputs';
-  static const outputsKey = 'outputs';
-
-  /// Builds the builder from a Map-like dynamic structure. This expects the
-  /// JSON format to be of the following structure:
-  ///
-  /// ```json
-  /// {
-  ///   "name": "<String>",
-  ///   "version": "<String>"
-  ///   "inputs": "<Object>"
-  ///   "outputs": "<Object>"
-  /// }
-  /// ```
-  ///
-  ///
-  /// See also:
-  ///  * [JsonComponentBuilder.fromDynamic]
-  ///  * [JsonWidgetData.fromDynamic]
-  static JsonComponentBuilder? maybeFromDynamic(
-    dynamic map, {
-    JsonWidgetRegistry? registry,
-  }) {
-    JsonComponentBuilder? result;
-    if (map != null) {
-      final name = map[nameKey]!;
-      Version? version;
-      if (map[versionKey] != null) {
-        version = Version.parse(map[versionKey]);
-      }
-      final inputs = Map<String, dynamic>.from(map[inputsKey] ?? {});
-      final outputs = Map<String, String>.from(map[outputsKey] ?? {});
-
-      result = JsonComponentBuilder(
-        args: map,
-        name: name,
-        version: version,
-        inputs: inputs,
-        outputs: outputs,
-        callerRegistry: registry,
-      );
-    }
-    return result;
-  }
-
-  @override
-  String get type => kType;
+  });
 }
 
 class _Component extends StatefulWidget {
   const _Component({
+    @JsonBuildArg() this.childBuilder,
+    @JsonBuildArg() required this.data,
+    @JsonBuildArg() required this.model,
+    super.key,
     required this.name,
-    required this.version,
+    this.version,
     required this.inputs,
     required this.outputs,
-    required this.callerRegistry,
-    required this.componentRegistry,
   });
 
+  final ChildWidgetBuilder? childBuilder;
+  final JsonWidgetData data;
+  final JsonComponentBuilderModel model;
   final String name;
   final Version? version;
   final Map<String, dynamic> inputs;
   final Map<String, String> outputs;
-  final JsonWidgetRegistry callerRegistry;
-  final JsonWidgetRegistry componentRegistry;
 
   @override
   _ComponentState createState() => _ComponentState();
@@ -141,12 +64,17 @@ class _Component extends StatefulWidget {
 
 class _ComponentState extends State<_Component> {
   JsonWidgetData? _componentData;
+  late JsonWidgetData _data;
+
+  List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
+  List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
 
   @override
   void initState() {
     super.initState();
+    _data = widget.data;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadComponent(context);
+      _init(context);
     });
   }
 
@@ -155,30 +83,60 @@ class _ComponentState extends State<_Component> {
     return _componentData == null
         ? const SizedBox()
         : _componentData!
-            .build(context: context, registry: widget.componentRegistry);
+            .build(context: context, registry: widget.data.jsonWidgetRegistry);
   }
 
-  Future<void> _loadComponent(BuildContext context) async {
+  Future<void> _init(BuildContext context) async {
     final loader = ComponentSpecLoader.get();
+    final callerRegistry = _data.jsonWidgetRegistry;
+    final componentRegistry = callerRegistry.copyWith(values: Map.from({}));
+    final componentSpec =
+        await loader.load(context, callerRegistry, widget.name, widget.version);
 
-    final componentSpec = await loader.load(
-        context, widget.callerRegistry, widget.name, widget.version);
+    _prepareInputs(componentSpec.inputs).forEach(
+      (name, value) {
+        final processedValue = callerRegistry.processArgs(value, null);
+        componentRegistry.setValue(name, processedValue.value);
 
-    final inputs = _prepareInputs(componentSpec.inputs);
-    final processedInputs = widget.callerRegistry.processArgs(inputs, null);
+        for (var inputValueVar in processedValue.jsonWidgetListenVariables) {
+          final inputSubscription =
+              componentRegistry.valueStream.listen((event) {
+            if (inputValueVar == event.id) {
+              final processedValue = callerRegistry.processArgs(value, null);
+              componentRegistry.setValue(name, processedValue.value);
+            }
+          });
+          _inputSubscriptions.add(inputSubscription);
+        }
+      },
+    );
 
-    Map<String, dynamic>.from(processedInputs.value).forEach((key, value) {
-      widget.componentRegistry.setValue(key, value);
+    _prepareOutputs(componentSpec.outputs)
+        .forEach((outputName, callerOutputName) {
+      final outputSubscription = componentRegistry.valueStream.listen((event) {
+        if (outputName == event.id) {
+          _data.jsonWidgetRegistry.setValue(callerOutputName, event.value);
+        }
+      });
+      _outputSubscriptions.add(outputSubscription);
     });
-
-    processedInputs.jsonWidgetListenVariables.forEach((inputVariable) => 
-      // widget.callerRegistry.valueStream.
-    )
 
     setState(
       () => _componentData = JsonWidgetData.fromDynamic(componentSpec.content,
-          registry: widget.componentRegistry),
+          registry: componentRegistry),
     );
+  }
+
+  @override
+  void dispose() {
+    for (var subscription in _inputSubscriptions) {
+      subscription.cancel();
+    }
+    for (var subscription in _outputSubscriptions) {
+      subscription.cancel();
+    }
+
+    super.dispose();
   }
 
   // Prepares the inputs based on the input definitions in the component.
@@ -194,47 +152,17 @@ class _ComponentState extends State<_Component> {
     }
     return inputs;
   }
-}
 
-class ComponentSchema {
-  static const id =
-      'https://peiffer-innovations.github.io/flutter_json_schemas/schemas/json_dynamic_plugin_components/component.json';
-
-  static final schema = {
-    r'$schema': 'http://json-schema.org/draft-07/schema#',
-    r'$id': id,
-    r'$children': -1,
-    'title': 'Components',
-    'oneOf': [
-      {
-        'type': 'null',
-      },
-      {
-        'type': 'object',
-        'additionalProperties': true,
-        'properties': {
-          'name': SchemaHelper.stringSchema,
-          'version': {
-            'oneOf': [
-              {
-                'type': 'null',
-              },
-              SchemaHelper.stringSchema,
-            ],
-          },
-          'values': {
-            'oneOf': [
-              {
-                'type': 'null',
-              },
-              {
-                'type': 'object',
-                'additionalProperties': true,
-              }
-            ]
-          }
-        }
+  // Prepares the outputs based on the input definitions in the component.
+  Map<String, String> _prepareOutputs(List<OutputSpec> outputSpecs) {
+    final outputs = <String, String>{};
+    // filter out outputs that are not defined in the component
+    for (var outputSpec in outputSpecs) {
+      final outputName = outputSpec.name;
+      if (widget.outputs.containsKey(outputName)) {
+        outputs[outputName] = widget.outputs[outputName]!;
       }
-    ],
-  };
+    }
+    return outputs;
+  }
 }
