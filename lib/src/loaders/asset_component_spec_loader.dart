@@ -26,8 +26,8 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
       version,
     );
     final componentSpecStr = await assetBundle.loadString(componentSpecPath);
-    final componentSpecMap =
-        yaon.parse(componentSpecStr) as Map<String, dynamic>;
+    final componentSpecMap = Map<String, dynamic>.from(
+        yaon.parse(componentSpecStr, normalize: true));
     return ComponentSpec.fromJson(componentSpecMap, registry);
   }
 

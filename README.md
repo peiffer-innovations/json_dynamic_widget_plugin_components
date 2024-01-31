@@ -3,10 +3,14 @@
 **Table of Contents**
 
 - [json_dynamic_widget_plugin_components](#json_dynamic_widget_plugin_components)
-  - [Table of Contents](#table-of-contents)
-  - [Live Example](#live-example)
-  - [Introduction](#introduction)
-  - [Using the Plugin](#using-the-plugin)
+   * [Table of Contents](#table-of-contents)
+   * [Live Example](#live-example)
+   * [Introduction](#introduction)
+   * [About](#about)
+      + [Component template loaders](#component-template-loaders)
+      + [Component values encapsulation](#component-values-encapsulation)
+      + [Versioning](#versioning)
+   * [Using the Plugin](#using-the-plugin)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -14,9 +18,13 @@
 
 ## Table of Contents
 
-* [Live Example](#live-example)
-* [Introduction](#introduction)
-* [Using the Plugin](#using-the-plugin)
+   * [Live Example](#live-example)
+   * [Introduction](#introduction)
+   * [About](#about)
+      + [Component template loaders](#component-template-loaders)
+      + [Component values encapsulation](#component-values-encapsulation)
+      + [Versioning](#versioning)
+   * [Using the Plugin](#using-the-plugin)
 
 
 ## Live Example
@@ -26,27 +34,29 @@
 
 ## Introduction
 
-Plugin to the [JSON Dynamic Widget](https://peiffer-innovations.github.io/json_dynamic_widget) which allows to combine  the set of JSON widgets into one and define 
-own interface.
+Plugin to the [JSON Dynamic Widget](https://peiffer-innovations.github.io/json_dynamic_widget) which allows to combine the set of JSON widgets into one -> component.
 
 ## About
 
-### Component template loaders
+### Component spec loaders
 Loaders are used to load components from the different sources.
 
 Each loader needs to implement the `load` method:
 ```
-Future<ComponentTemplate> load(BuildContext context, JsonWidgetRegistry? registry, String componentName, Version? version);
+  Future<ComponentSpec> load(BuildContext context, JsonWidgetRegistry? registry,
+      String componentName, Version? version);
 ```
 
 Currently supported loaders:
-- AssetComponentTemplateLoader : Loads the components from the assets
+- AssetComponentSpecLoader : Loads the component spec from the assets (JSON & YAML supported)
 
 ### Component values encapsulation
-Each component can have it's own values. Because of that we need to handle the issue of the name collision.
+Each component can have it's own values.
 
-Each component have it's own, separate registry. Each component allow to define it's own inputs and outputs:
-* `inputs` - the input variables of the component, that are available for the component registry. Not passing any values on caller side means that the default values will be used.
+To avoid name collisions each component have also it's own, separate registry.
+
+Each component allow to define it's own inputs and outputs:
+* `inputs` - the input variables of the component, that are available for the component registry. Not passing any values on caller side means that the default values will be used. If the value of the input uses `variables` then each update will be passed to the component registry.
 * `outputs` - the output variables of the component, that can be exported to caller registry. Not passing any values means on caller side means that specific variable is not exported to the caller registry.
 
 For e.g.
@@ -96,13 +106,15 @@ void main() {
   // Get an instance of the registry
   var registry = JsonWidgetRegistry.instance;
 
-  // create valid component loader
+  // Init component spec loader
   var basePath = 'assets/components'
   final loader = AssetComponentLoader(basePath);
+  ComponentSpecLoader.init(loader);
   
   // Bind the plugin to the registry. This is necessary for the registry to
   // find the widget provided by the plugin
-  JsonComponentsPlugin.bind(registry, loader);
+  JsonComponentsPluginRegistrar.registerDefaults(registry: registry);
+
 
   // ...
 }

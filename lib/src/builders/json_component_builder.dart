@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:json_dynamic_widget/builders.dart';
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:json_dynamic_widget_plugin_components/src/models/json_component_spec.dart';
 import 'package:version/version.dart';
@@ -68,8 +67,8 @@ class _ComponentState extends State<_Component> {
   late JsonWidgetRegistry _componentRegistry;
   late JsonWidgetData _data;
 
-  List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
-  List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
+  final List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
+  final List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
 
   static final JsonWidgetRegistry _componentParent =
       JsonWidgetRegistry(debugLabel: 'component_parent');
@@ -87,8 +86,7 @@ class _ComponentState extends State<_Component> {
   Widget build(BuildContext context) {
     return _componentData == null
         ? const SizedBox()
-        : _componentData!
-            .build(context: context, registry: _componentRegistry);
+        : _componentData!.build(context: context, registry: _componentRegistry);
   }
 
   Future<void> _init(BuildContext context) async {
@@ -104,36 +102,59 @@ class _ComponentState extends State<_Component> {
       parent: _componentParent,
     );
     _prepareInputs(componentSpec.inputs).forEach(
-      (name, value) {
-        final processedValue = callerRegistry.processArgs(value, null);
+      (name, rawValue) {
+        final processedValue = callerRegistry.processArgs(rawValue, null);
         _componentRegistry.setValue(name, processedValue.value);
 
-        for (var inputValueVar in processedValue.jsonWidgetListenVariables) {
-          final inputSubscription = callerRegistry.valueStream.listen((event) {
-            if (inputValueVar == event.id) {
-              final processedValue = callerRegistry.processArgs(value, null);
-              _componentRegistry.setValue(name, processedValue.value);
-            }
-          });
-          _inputSubscriptions.add(inputSubscription);
-        }
+        _addInputSubscriptions(
+          name,
+          rawValue,
+          callerRegistry,
+          processedValue,
+        );
       },
     );
 
     _prepareOutputs(componentSpec.outputs)
-        .forEach((outputName, callerOutputName) {
-      final outputSubscription = _componentRegistry.valueStream.listen((event) {
-        if (outputName == event.id) {
-          callerRegistry.setValue(callerOutputName, event.value);
-        }
-      });
-      _outputSubscriptions.add(outputSubscription);
+        .forEach((componentOutputName, callerOutputName) {
+      _addOutputSubscription(
+          componentOutputName, callerOutputName, callerRegistry);
     });
 
     setState(
       () => _componentData = JsonWidgetData.fromDynamic(componentSpec.content,
           registry: _componentRegistry),
     );
+  }
+
+  void _addInputSubscriptions(
+    String componentInputName,
+    dynamic rawValue,
+    JsonWidgetRegistry callerRegistry,
+    ProcessedArg processedValue,
+  ) {
+    for (var inputValueVar in processedValue.jsonWidgetListenVariables) {
+      final inputSubscription = callerRegistry.valueStream.listen((event) {
+        if (inputValueVar == event.id) {
+          final processedValue = callerRegistry.processArgs(rawValue, null);
+          _componentRegistry.setValue(componentInputName, processedValue.value);
+        }
+      });
+      _inputSubscriptions.add(inputSubscription);
+    }
+  }
+
+  void _addOutputSubscription(
+    String componentOutputName,
+    String callerOutputName,
+    JsonWidgetRegistry callerRegistry,
+  ) {
+    final outputSubscription = _componentRegistry.valueStream.listen((event) {
+      if (componentOutputName == event.id) {
+        callerRegistry.setValue(callerOutputName, event.value);
+      }
+    });
+    _outputSubscriptions.add(outputSubscription);
   }
 
   @override
@@ -163,7 +184,7 @@ class _ComponentState extends State<_Component> {
     return inputs;
   }
 
-  // Prepares the outputs based on the input definitions in the component.
+  // Prepares the outputs based on the output definitions in the component.
   Map<String, String> _prepareOutputs(List<OutputSpec> outputSpecs) {
     final outputs = <String, String>{};
     // filter out outputs that are not defined in the component

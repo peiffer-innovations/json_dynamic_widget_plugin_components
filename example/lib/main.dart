@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:json_dynamic_widget/builders.dart';
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:json_dynamic_widget_plugin_components/json_dynamic_widget_plugin_components.dart';
 import 'package:logging/logging.dart';
@@ -34,7 +33,7 @@ void main() async {
   runApp(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: JsWidgetPage(
+      home: ComponentWidgetPage(
         data: data,
       ),
       theme: ThemeData.light(),
@@ -42,8 +41,8 @@ void main() async {
   );
 }
 
-class JsWidgetPage extends StatelessWidget {
-  const JsWidgetPage({
+class ComponentWidgetPage extends StatelessWidget {
+  const ComponentWidgetPage({
     super.key,
     required this.data,
   });

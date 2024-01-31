@@ -19,12 +19,14 @@ class ComponentSpec extends JsonClass {
           json[versionKey] != null ? Version.parse(json[versionKey]) : null,
       inputs: json[inputsKey] != null
           ? (json[inputsKey] as List<dynamic>)
-              .map((e) => InputSpec.fromJson(e))
+              .map((inputSpecRaw) =>
+                  InputSpec.fromJson(Map<String, dynamic>.from(inputSpecRaw)))
               .toList()
           : [],
       outputs: json[outputsKey] != null
           ? (json[outputsKey] as List<dynamic>)
-              .map((e) => OutputSpec.fromJson(e))
+              .map((outputSpecRaw) =>
+                  OutputSpec.fromJson(Map<String, dynamic>.from(outputSpecRaw)))
               .toList()
           : [],
       content: Map<String, dynamic>.from(json[contentKey]),
