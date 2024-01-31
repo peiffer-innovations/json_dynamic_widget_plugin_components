@@ -17,10 +17,11 @@ dependencies:
   flutter: 
     sdk: 'flutter'
   json_class: '^3.0.0+5'
-  json_dynamic_widget: '^7.0.2'
+  json_dynamic_widget: '^7.0.6'
   json_theme: '^6.3.0'
   logging: '^1.2.0'
   meta: '^1.9.1'
+  path: ^1.8.3
   uuid: '^4.1.0'
   version: ^3.0.2
 

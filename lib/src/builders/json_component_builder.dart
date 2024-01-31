@@ -1,7 +1,8 @@
 import 'dart:async';
 
+import 'package:json_dynamic_widget/builders.dart';
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
-import 'package:json_dynamic_widget_plugin_components/src/models/component_spec.dart';
+import 'package:json_dynamic_widget_plugin_components/src/models/json_component_spec.dart';
 import 'package:version/version.dart';
 import '../loaders/component_spec_loader.dart';
 
@@ -64,10 +65,14 @@ class _Component extends StatefulWidget {
 
 class _ComponentState extends State<_Component> {
   JsonWidgetData? _componentData;
+  late JsonWidgetRegistry _componentRegistry;
   late JsonWidgetData _data;
 
   List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
   List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
+
+  static final JsonWidgetRegistry _componentParent =
+      JsonWidgetRegistry(debugLabel: 'component_parent');
 
   @override
   void initState() {
@@ -83,27 +88,31 @@ class _ComponentState extends State<_Component> {
     return _componentData == null
         ? const SizedBox()
         : _componentData!
-            .build(context: context, registry: widget.data.jsonWidgetRegistry);
+            .build(context: context, registry: _componentRegistry);
   }
 
   Future<void> _init(BuildContext context) async {
     final loader = ComponentSpecLoader.get();
     final callerRegistry = _data.jsonWidgetRegistry;
-    final componentRegistry = callerRegistry.copyWith(values: Map.from({}));
+
     final componentSpec =
         await loader.load(context, callerRegistry, widget.name, widget.version);
 
+    _componentRegistry = callerRegistry.copyWith(
+      debugLabel: '${componentSpec.name}:${componentSpec.version?.toString()}',
+      values: {},
+      parent: _componentParent,
+    );
     _prepareInputs(componentSpec.inputs).forEach(
       (name, value) {
         final processedValue = callerRegistry.processArgs(value, null);
-        componentRegistry.setValue(name, processedValue.value);
+        _componentRegistry.setValue(name, processedValue.value);
 
         for (var inputValueVar in processedValue.jsonWidgetListenVariables) {
-          final inputSubscription =
-              componentRegistry.valueStream.listen((event) {
+          final inputSubscription = callerRegistry.valueStream.listen((event) {
             if (inputValueVar == event.id) {
               final processedValue = callerRegistry.processArgs(value, null);
-              componentRegistry.setValue(name, processedValue.value);
+              _componentRegistry.setValue(name, processedValue.value);
             }
           });
           _inputSubscriptions.add(inputSubscription);
@@ -113,9 +122,9 @@ class _ComponentState extends State<_Component> {
 
     _prepareOutputs(componentSpec.outputs)
         .forEach((outputName, callerOutputName) {
-      final outputSubscription = componentRegistry.valueStream.listen((event) {
+      final outputSubscription = _componentRegistry.valueStream.listen((event) {
         if (outputName == event.id) {
-          _data.jsonWidgetRegistry.setValue(callerOutputName, event.value);
+          callerRegistry.setValue(callerOutputName, event.value);
         }
       });
       _outputSubscriptions.add(outputSubscription);
@@ -123,7 +132,7 @@ class _ComponentState extends State<_Component> {
 
     setState(
       () => _componentData = JsonWidgetData.fromDynamic(componentSpec.content,
-          registry: componentRegistry),
+          registry: _componentRegistry),
     );
   }
 
@@ -146,7 +155,8 @@ class _ComponentState extends State<_Component> {
     for (var inputSpec in inputSpecs) {
       var value = inputSpec.defaultValue ?? '';
       if (widget.inputs.containsKey(inputSpec.name)) {
-        value = widget.inputs[inputSpec.name]!;
+        value = widget.data.jsonWidgetArgs[ComponentSpec.inputsKey]
+            [inputSpec.name]!;
       }
       inputs[inputSpec.name] = value;
     }

@@ -24,6 +24,7 @@ flutter:
   assets: 
     - 'assets/pages/'
     - 'assets/components/custom_text_input/'
+    - 'assets/components/centered_text/'
 
 ignore_updates: 
   - 'archive'

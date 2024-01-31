@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:json_dynamic_widget/builders.dart';
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:json_dynamic_widget_plugin_components/json_dynamic_widget_plugin_components.dart';
 import 'package:logging/logging.dart';
@@ -19,10 +20,9 @@ void main() async {
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
-  final registry =
-      JsonWidgetRegistry.instance.copyWith(disableValidation: true);
-  JsonComponentsPlugin.bind(
-      registry, AssetComponentSpecLoader('assets/components'));
+  final registry = JsonWidgetRegistry.instance;
+  JsonComponentsPluginRegistrar.registerDefaults(registry: registry);
+  ComponentSpecLoader.init(AssetComponentSpecLoader('assets/components'));
 
   registry.navigatorKey = navigatorKey;
 

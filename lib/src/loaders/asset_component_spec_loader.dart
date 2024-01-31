@@ -1,16 +1,16 @@
-import 'dart:convert';
-
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
+import 'package:path/path.dart' as path;
 import 'package:version/version.dart';
 
-import '../models/component_spec.dart';
-import 'package:path/path.dart' as Path;
+import '../models/json_component_spec.dart';
 import 'component_spec_loader.dart';
 
+// Loads the component specification from JSON or YAML asset. In case of version being
+// null, the loader should return the latest version of the component.
 class AssetComponentSpecLoader implements ComponentSpecLoader {
-  AssetComponentSpecLoader(this.basePath);
+  AssetComponentSpecLoader(this._basePath);
 
-  final String basePath;
+  final String _basePath;
 
   @override
   Future<ComponentSpec> load(
@@ -20,26 +20,47 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
     Version? version,
   ) async {
     final assetBundle = DefaultAssetBundle.of(context);
+    final componentSpecPath = await _getComponentSpecPath(
+      assetBundle,
+      componentName,
+      version,
+    );
+    final componentSpecStr = await assetBundle.loadString(componentSpecPath);
+    final componentSpecMap =
+        yaon.parse(componentSpecStr) as Map<String, dynamic>;
+    return ComponentSpec.fromJson(componentSpecMap, registry);
+  }
 
-    version ??= await _getLatestVersion(assetBundle, componentName);
+  Future<String> _getComponentSpecPath(
+    AssetBundle assetBundle,
+    String componentName,
+    Version? version,
+  ) async {
+    final manifest = await AssetManifest.loadFromAssetBundle(assetBundle);
+    final componentSpecBasePath = path.join(
+      _basePath,
+      componentName,
+    );
+    final componentSpecPaths = manifest
+        .listAssets()
+        .where((assetPath) => assetPath.startsWith(componentSpecBasePath));
+
+    version ??= await _getLatestVersion(componentSpecPaths);
 
     if (version == null) {
       throw Exception('Component: $componentName not found');
     }
 
-    final componentSpecStr = await assetBundle.loadString(Path.join(
-      basePath,
-      componentName,
-      '${version.toString()}.json',
-    ));
-    final componentSpecMap =
-        json.decode(componentSpecStr) as Map<String, dynamic>;
-    return ComponentSpec.fromJson(componentSpecMap, registry);
+    return componentSpecPaths
+        .firstWhere((path) => path.contains('/${version.toString()}'));
   }
 
+  static final RegExp _extRegExp = RegExp(r'.[a-z]+$');
+
   Future<Version?> _getLatestVersion(
-      AssetBundle assetBundle, String componentName) async {
-    final versions = await _getAllVersions(assetBundle, componentName);
+      Iterable<String> componentSpecPaths) async {
+    final versions = componentSpecPaths.map((path) =>
+        Version.parse(path.split('/').last.replaceAll(_extRegExp, '')));
 
     if (versions.isEmpty) {
       return null;
@@ -50,31 +71,12 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
       return latestVersion;
     }
 
-    for (var i = 1; i < versions.length; i++) {
-      final version = versions[i];
+    for (var version in versions) {
       if (version.compareTo(latestVersion) > 0) {
         latestVersion = version;
       }
     }
 
     return latestVersion;
-  }
-
-  Future<List<Version>> _getAllVersions(
-    AssetBundle assetBundle,
-    String componentName,
-  ) async {
-    final versions = <Version>[];
-    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    manifest
-        .listAssets()
-        .where((assetPath) => assetPath.startsWith('$basePath/$componentName/'))
-        .forEach((componentPath) {
-      final version = Version.parse(
-        componentPath.split('/').last.replaceAll('.json', ''),
-      );
-      versions.add(version);
-    });
-    return versions;
   }
 }

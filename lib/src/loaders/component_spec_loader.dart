@@ -1,5 +1,5 @@
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
-import 'package:json_dynamic_widget_plugin_components/src/models/component_spec.dart';
+import 'package:json_dynamic_widget_plugin_components/src/models/json_component_spec.dart';
 import 'package:version/version.dart';
 
 abstract class ComponentSpecLoader {

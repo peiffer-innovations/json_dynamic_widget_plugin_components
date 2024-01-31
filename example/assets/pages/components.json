@@ -13,31 +13,51 @@
       }
     },
     "body": {
-      "type": "column",
+      "type": "set_value",
       "args": {
-        "mainAxisSize": "min",
-        "children": [
-          {
-            "type": "component",
-            "args": {
-              "name": "custom_text_input",
-              "version": "1.0.0",
-              "inputs": {
-                "label": "First name",
-                "hint": ""
+        "values": {
+          "firstNameValue": ""
+        },
+        "child": {
+          "type": "column",
+          "args": {
+            "mainAxisSize": "min",
+            "children": [
+              {
+                "type": "component",
+                "args": {
+                  "name": "custom_text_input",
+                  "version": "1.0.0",
+                  "inputs": {
+                    "label": "First name",
+                    "hint": ""
+                  },
+                  "outputs": {
+                    "textInput": "firstNameValue"
+                  }
+                }
               },
-              "outputs": {
-                "textInput": "firstNameValue"
+              {
+                "type": "text",
+                "args": {
+                  "text": "${'Exported first name from component: ' +  firstNameValue}"
+                },
+                "listen": [
+                  "firstNameValue"
+                ]
+              },
+              {
+                "type": "component",
+                "args": {
+                  "name": "centered_text",
+                  "inputs": {
+                    "text": "${firstNameValue}"
+                  }
+                }
               }
-            }
-          },
-          {
-            "type": "text",
-            "args": {
-              "text": "${'Exported first name from component: ' +  firstNameValue ?? ''}"
-            }
+            ]
           }
-        ]
+        }
       }
     }
   }
