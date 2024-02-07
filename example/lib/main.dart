@@ -42,11 +42,11 @@ void main() async {
 }
 
 class ComponentWidgetPage extends StatelessWidget {
+
   const ComponentWidgetPage({
     super.key,
     required this.data,
   });
-
   final JsonWidgetData data;
 
   @override

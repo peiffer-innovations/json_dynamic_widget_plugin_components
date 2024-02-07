@@ -40,7 +40,7 @@
               {
                 "type": "text",
                 "args": {
-                  "text": "${'Exported first name from component: ' +  firstNameValue}"
+                  "text": "${'Exported first name from component: ' +  firstNameValue ?? ''}"
                 },
                 "listen": [
                   "firstNameValue"

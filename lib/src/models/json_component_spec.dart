@@ -32,18 +32,18 @@ class ComponentSpec extends JsonClass {
       content: Map<String, dynamic>.from(json[contentKey]),
     );
   }
-
-  final String name;
-  final Version? version;
-  late final List<InputSpec> inputs;
-  late final List<OutputSpec> outputs;
-  final Map<String, dynamic> content;
-
   static const nameKey = 'name';
   static const versionKey = 'version';
+
   static const inputsKey = 'inputs';
   static const outputsKey = 'outputs';
   static const contentKey = 'content';
+  final String name;
+  final Version? version;
+
+  late final List<InputSpec> inputs;
+  late final List<OutputSpec> outputs;
+  final Map<String, dynamic> content;
 
   @override
   Map<String, dynamic> toJson() {
@@ -63,20 +63,20 @@ class InputSpec extends JsonClass {
     required this.description,
     required this.defaultValue,
   });
-
   factory InputSpec.fromJson(Map<String, dynamic> json) => InputSpec(
         name: json[nameKey]!,
         description: json[descriptionKey]!,
         defaultValue: json[defaultValueKey]!,
       );
+  static const nameKey = 'name';
 
+  static const descriptionKey = 'description';
+
+  static const defaultValueKey = 'defaultValue';
   final String name;
   final String? description;
-  final dynamic defaultValue;
 
-  static const nameKey = 'name';
-  static const descriptionKey = 'description';
-  static const defaultValueKey = 'defaultValue';
+  final dynamic defaultValue;
 
   @override
   Map<String, dynamic> toJson() {
@@ -90,15 +90,14 @@ class InputSpec extends JsonClass {
 
 class OutputSpec extends JsonClass {
   OutputSpec({required this.name, required this.description});
-
   factory OutputSpec.fromJson(Map<String, dynamic> json) =>
       OutputSpec(name: json[nameKey]!, description: json[descriptionKey]!);
+  static const nameKey = 'name';
+
+  static const descriptionKey = 'description';
 
   final String name;
   final String description;
-
-  static const nameKey = 'name';
-  static const descriptionKey = 'description';
 
   @override
   Map<String, dynamic> toJson() {

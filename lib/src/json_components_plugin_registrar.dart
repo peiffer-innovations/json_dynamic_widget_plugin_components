@@ -1,5 +1,4 @@
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
-
 // ignore: unused_import
 import 'package:json_dynamic_widget_plugin_components/json_dynamic_widget_plugin_components.dart';
 

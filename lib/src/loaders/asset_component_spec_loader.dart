@@ -8,7 +8,9 @@ import 'component_spec_loader.dart';
 // Loads the component specification from JSON or YAML asset. In case of version being
 // null, the loader should return the latest version of the component.
 class AssetComponentSpecLoader implements ComponentSpecLoader {
-  AssetComponentSpecLoader(this._basePath);
+  const AssetComponentSpecLoader(this._basePath);
+
+  static final RegExp _extRegExp = RegExp(r'.[a-z]+$');
 
   final String _basePath;
 
@@ -55,25 +57,18 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
         .firstWhere((path) => path.contains('/${version.toString()}'));
   }
 
-  static final RegExp _extRegExp = RegExp(r'.[a-z]+$');
-
   Future<Version?> _getLatestVersion(
       Iterable<String> componentSpecPaths) async {
     final versions = componentSpecPaths.map((path) =>
         Version.parse(path.split('/').last.replaceAll(_extRegExp, '')));
+    Version? latestVersion;
 
-    if (versions.isEmpty) {
-      return null;
-    }
-
-    var latestVersion = versions.first;
-    if (versions.length == 1) {
-      return latestVersion;
-    }
-
-    for (var version in versions) {
-      if (version.compareTo(latestVersion) > 0) {
-        latestVersion = version;
+    if (versions.isNotEmpty) {
+      latestVersion = versions.first;
+      for (var version in versions.skip(1)) {
+        if (version.compareTo(latestVersion) > 0) {
+          latestVersion = version;
+        }
       }
     }
 
