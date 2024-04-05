@@ -12,21 +12,21 @@ class _Component extends StatefulWidget {
   const _Component({
     @JsonBuildArg() this.childBuilder,
     @JsonBuildArg() required this.data,
-    @JsonBuildArg() required this.model,
-    super.key,
-    required this.name,
-    this.version,
     required this.inputs,
+    super.key,
+    @JsonBuildArg() required this.model,
+    required this.name,
     required this.outputs,
+    this.version,
   });
   final ChildWidgetBuilder? childBuilder;
 
   final JsonWidgetData data;
+  final Map<String, dynamic> inputs;
   final JsonComponentBuilderModel model;
   final String name;
-  final Version? version;
-  final Map<String, dynamic> inputs;
   final Map<String, String> outputs;
+  final Version? version;
 
   @override
   _ComponentState createState() => _ComponentState();
@@ -35,19 +35,22 @@ class _Component extends StatefulWidget {
 class _ComponentState extends State<_Component> {
   static final JsonWidgetRegistry _componentParent =
       JsonWidgetRegistry(debugLabel: 'component_parent');
+
+  final List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
+  final List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
+
   JsonWidgetData? _componentData;
   late JsonWidgetRegistry _componentRegistry;
-
   late JsonWidgetData _data;
-  final List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
-
-  final List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
 
   @override
   Widget build(BuildContext context) {
     return _componentData == null
         ? const SizedBox()
-        : _componentData!.build(context: context, registry: _componentRegistry);
+        : _componentData!.build(
+            context: context,
+            registry: _componentRegistry,
+          );
   }
 
   @override
@@ -105,8 +108,12 @@ class _ComponentState extends State<_Component> {
     final loader = ComponentSpecLoader.get();
     final callerRegistry = _data.jsonWidgetRegistry;
 
-    final componentSpec =
-        await loader.load(context, callerRegistry, widget.name, widget.version);
+    final componentSpec = await loader.load(
+      componentName: widget.name,
+      context: context,
+      registry: callerRegistry,
+      version: widget.version,
+    );
 
     _componentRegistry = callerRegistry.copyWith(
       debugLabel: '${componentSpec.name}:${componentSpec.version?.toString()}',
@@ -130,13 +137,18 @@ class _ComponentState extends State<_Component> {
     _prepareOutputs(componentSpec.outputs)
         .forEach((componentOutputName, callerOutputName) {
       _addOutputSubscription(
-          componentOutputName, callerOutputName, callerRegistry);
+        componentOutputName,
+        callerOutputName,
+        callerRegistry,
+      );
     });
 
     if (mounted) {
       setState(
-        () => _componentData = JsonWidgetData.fromDynamic(componentSpec.content,
-            registry: _componentRegistry),
+        () => _componentData = JsonWidgetData.fromDynamic(
+          componentSpec.content,
+          registry: _componentRegistry,
+        ),
       );
     }
   }
@@ -185,18 +197,20 @@ abstract class _JsonComponentBuilder extends JsonWidgetBuilder {
     Key? key,
   });
 
+  @JsonArgEncoder('version')
+  static String _encodeVersion(Version? version) => version?.toString() ?? '';
+
   @JsonArgDecoder('inputs')
   Map<String, dynamic> _decodeInputs({required dynamic value}) =>
-      value == null ? {} : Map<String, dynamic>.from(value);
+      value == null ? const {} : Map<String, dynamic>.from(value);
 
   @JsonArgDecoder('outputs')
   Map<String, String> _decodeOutputs({required dynamic value}) =>
-      value == null ? {} : Map<String, String>.from(value);
+      value == null ? const {} : Map<String, String>.from(value);
 
   @JsonArgDecoder('version')
   Version? _decodeVersion({required dynamic value}) =>
-      value != null && value != '' ? Version.parse(value) : null;
-
-  @JsonArgEncoder('version')
-  static String _encodeVersion(Version? version) => version?.toString() ?? '';
+      value != null && value?.toString().trim() != ''
+          ? Version.parse(value)
+          : null;
 }

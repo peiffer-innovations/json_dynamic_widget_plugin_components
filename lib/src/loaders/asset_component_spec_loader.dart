@@ -15,12 +15,12 @@ class AssetComponentSpecLoader implements ComponentSpecLoader {
   final String _basePath;
 
   @override
-  Future<ComponentSpec> load(
-    BuildContext context,
+  Future<ComponentSpec> load({
+    required String componentName,
+    required BuildContext context,
     JsonWidgetRegistry? registry,
-    String componentName,
     Version? version,
-  ) async {
+  }) async {
     final assetBundle = DefaultAssetBundle.of(context);
     final componentSpecPath = await _getComponentSpecPath(
       assetBundle,
