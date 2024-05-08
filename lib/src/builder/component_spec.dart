@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
-import 'package:version/version.dart';
 
 class ComponentSpec extends JsonClass {
   ComponentSpec({
@@ -12,14 +11,10 @@ class ComponentSpec extends JsonClass {
     required this.content,
   });
 
-  factory ComponentSpec.fromJson(
-    Map<String, dynamic> json,
-    JsonWidgetRegistry? registry,
-  ) {
+  factory ComponentSpec.fromJson(Map<String, dynamic> json) {
     return ComponentSpec(
       name: json[nameKey]!,
-      version:
-          json[versionKey] != null ? Version.parse(json[versionKey]) : null,
+      version: json[versionKey]!,
       inputs: json[inputsKey] != null
           ? (json[inputsKey] as List<dynamic>)
               .map((inputSpecRaw) =>
@@ -46,7 +41,7 @@ class ComponentSpec extends JsonClass {
   late final List<InputSpec> inputs;
   final String name;
   late final List<OutputSpec> outputs;
-  final Version? version;
+  final String version;
 
   @override
   Map<String, dynamic> toJson() {
@@ -55,7 +50,7 @@ class ComponentSpec extends JsonClass {
       inputsKey: inputs.map((input) => input.toJson()).toList(),
       nameKey: name,
       outputsKey: outputs.map((output) => output.toJson()).toList(),
-      versionKey: version?.toString(),
+      versionKey: version.toString(),
     };
   }
 }
