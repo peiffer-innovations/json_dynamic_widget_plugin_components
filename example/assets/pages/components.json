@@ -50,6 +50,7 @@
                 "type": "component",
                 "args": {
                   "name": "centered_text",
+                  "version": "1.0.1",
                   "inputs": {
                     "text": "${firstNameValue}"
                   }
