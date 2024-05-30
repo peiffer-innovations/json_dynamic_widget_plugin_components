@@ -20,8 +20,17 @@ void main() async {
   final navigatorKey = GlobalKey<NavigatorState>();
 
   final registry = JsonWidgetRegistry.instance;
-  JsonComponentsPluginRegistrar.registerDefaults(registry: registry);
-  ComponentSpecLoader.init(AssetComponentSpecLoader('assets/components'));
+  JsonComponentsPluginRegistrar.registerDefaults(registry: registry).withLoader(
+    AssetDependencyLoader(
+      pathResolver: DirAssetPathResolver(
+        basePath: 'assets/components',
+        ext: Ext.json,
+        extByDependencyName: {
+          'centered_text': Ext.yaml,
+        },
+      ),
+    ),
+  );
 
   registry.navigatorKey = navigatorKey;
 
@@ -42,7 +51,6 @@ void main() async {
 }
 
 class ComponentWidgetPage extends StatelessWidget {
-
   const ComponentWidgetPage({
     super.key,
     required this.data,

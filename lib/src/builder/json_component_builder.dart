@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
-import 'package:json_dynamic_widget_plugin_components/src/models/json_component_spec.dart';
-import 'package:version/version.dart';
+import 'package:json_dynamic_widget_plugin_components/src/builder/component_spec.dart';
+import 'package:json_dynamic_widget_plugin_components/src/dependency_loader/dependency.dart';
 
-import '../loaders/component_spec_loader.dart';
+import '../dependency_loader/dependency_registry.dart';
 
 part 'json_component_builder.g.dart';
 
@@ -26,7 +26,7 @@ class _Component extends StatefulWidget {
   final JsonComponentBuilderModel model;
   final String name;
   final Map<String, String> outputs;
-  final Version? version;
+  final String? version;
 
   @override
   _ComponentState createState() => _ComponentState();
@@ -105,18 +105,37 @@ class _ComponentState extends State<_Component> {
   }
 
   Future<void> _init(BuildContext context) async {
-    final loader = ComponentSpecLoader.get();
+    final dependencyRegistry = DependencyRegistry.instance;
     final callerRegistry = _data.jsonWidgetRegistry;
 
-    final componentSpec = await loader.load(
-      componentName: widget.name,
-      context: context,
-      registry: callerRegistry,
-      version: widget.version,
-    );
+    var version = '';
+    if (context.mounted) {
+      version = await dependencyRegistry.resolveVersion(
+          widget.name, widget.version, context);
+    }
+    if (version.isEmpty) {
+      throw Exception(
+          'Unable to resolve version for component: ${widget.name}:${widget.version ?? ''}');
+    }
+    final dependency = Dependency(name: widget.name, version: version);
+
+    String? componentSpecStr;
+    if (context.mounted) {
+      componentSpecStr = await dependencyRegistry.load(dependency, context);
+    }
+
+    if (componentSpecStr == null || componentSpecStr.isEmpty) {
+      throw Exception(
+          'Unable to load component: ${widget.name}:${widget.version ?? ''}');
+    }
+
+    final componentSpecJson = Map<String, dynamic>.from(
+        yaon.parse(componentSpecStr, normalize: true));
+
+    final componentSpec = ComponentSpec.fromJson(componentSpecJson);
 
     _componentRegistry = callerRegistry.copyWith(
-      debugLabel: '${componentSpec.name}:${componentSpec.version?.toString()}',
+      debugLabel: '${componentSpec.name}:${componentSpec.version.toString()}',
       values: {},
       parent: _componentParent,
     );
@@ -197,9 +216,6 @@ abstract class _JsonComponentBuilder extends JsonWidgetBuilder {
     Key? key,
   });
 
-  @JsonArgEncoder('version')
-  static String _encodeVersion(Version? version) => version?.toString() ?? '';
-
   @JsonArgDecoder('inputs')
   Map<String, dynamic> _decodeInputs({required dynamic value}) =>
       value == null ? const {} : Map<String, dynamic>.from(value);
@@ -207,10 +223,4 @@ abstract class _JsonComponentBuilder extends JsonWidgetBuilder {
   @JsonArgDecoder('outputs')
   Map<String, String> _decodeOutputs({required dynamic value}) =>
       value == null ? const {} : Map<String, String>.from(value);
-
-  @JsonArgDecoder('version')
-  Version? _decodeVersion({required dynamic value}) =>
-      value != null && value?.toString().trim() != ''
-          ? Version.parse(value)
-          : null;
 }
