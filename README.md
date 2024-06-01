@@ -2,15 +2,16 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [json_dynamic_widget_plugin_components](#json_dynamic_widget_plugin_components)
-   * [Table of Contents](#table-of-contents)
-   * [Live Example](#live-example)
-   * [Introduction](#introduction)
-   * [About](#about)
-      + [Component template loaders](#component-template-loaders)
-      + [Component values encapsulation](#component-values-encapsulation)
-      + [Versioning](#versioning)
-   * [Using the Plugin](#using-the-plugin)
+- [json\_dynamic\_widget\_plugin\_components](#json_dynamic_widget_plugin_components)
+  - [Table of Contents](#table-of-contents)
+  - [Live Example](#live-example)
+  - [Introduction](#introduction)
+  - [About](#about)
+    - [Dependency loaders](#dependency-loaders)
+    - [Dependency version resolvers](#dependency-version-resolvers)
+    - [Component spec](#component-spec)
+    - [Component values encapsulation](#component-values-encapsulation)
+  - [Using the Plugin](#using-the-plugin)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -18,13 +19,16 @@
 
 ## Table of Contents
 
-   * [Live Example](#live-example)
-   * [Introduction](#introduction)
-   * [About](#about)
-      + [Component template loaders](#component-template-loaders)
-      + [Component values encapsulation](#component-values-encapsulation)
-      + [Versioning](#versioning)
-   * [Using the Plugin](#using-the-plugin)
+- [json\_dynamic\_widget\_plugin\_components](#json_dynamic_widget_plugin_components)
+  - [Table of Contents](#table-of-contents)
+  - [Live Example](#live-example)
+  - [Introduction](#introduction)
+  - [About](#about)
+    - [Dependency loaders](#dependency-loaders)
+    - [Dependency version resolvers](#dependency-version-resolvers)
+    - [Component spec](#component-spec)
+    - [Component values encapsulation](#component-values-encapsulation)
+  - [Using the Plugin](#using-the-plugin)
 
 
 ## Live Example
@@ -38,17 +42,65 @@ Plugin to the [JSON Dynamic Widget](https://peiffer-innovations.github.io/json_d
 
 ## About
 
-### Component spec loaders
-Loaders are used to load components from the different sources.
+### Dependency loaders
+Dependency is a combination of a `name` and a `version`.
+
+Loaders are used to load components in a raw format from the different sources.
 
 Each loader needs to implement the `load` method:
 ```
-  Future<ComponentSpec> load(BuildContext context, JsonWidgetRegistry? registry,
-      String componentName, Version? version);
+    Future<String?> load(Dependency dependency, BuildContext context);
 ```
 
 Currently supported loaders:
-- AssetComponentSpecLoader : Loads the component spec from the assets (JSON & YAML supported)
+- **AssetDependencyLoader** : Loads the dependency from the assets. Can be configured via `AssetPathResolver` which specifies how `Dependency` is resolved to the path.
+- **MemoryDependencyLoader** : Loads the dependency from the in-memory map.
+- **CachedDependencyLoader** : Caches the result of the child dependency loader.
+
+### Dependency version resolvers
+Dependency version resolvers allow to define custom version resolving strategies. 
+For example in case of the missing version string it is possible to define
+the logic of looking for the  `latest` version.
+
+Each loader needs to implement the resolve method:
+```
+Future<String> resolve(String name, String? version, BuildContext context);
+```
+
+Currently supported version resolvers:
+- **RequiredDependencyVersionResolver** : Requires the version string to be present in the dependency and throw the error if it's not.
+
+### Component spec
+Component specification defines the version, name and the set of inputs and outputs.
+It's content is just the group of widgets which are used to build the component.
+
+Fields definition:
+- **name** - component name
+- **version** - component version
+- **inputs** - list of input variables and their default values
+- **outputs** - list of output variables that can be used outside of the component
+- **content** - group of the widgets which uses the inputs and produces the outputs variables
+
+Example:
+```
+name: centered_text
+version: 1.0.0
+inputs:
+- name: text
+  description: The text value
+  defaultValue: ''
+outputs: []
+content:
+  type: center
+  listen:
+  - text
+  args:
+    child:
+      type: text
+      args:
+        text: "${'This text is centered:' + text ?? ''}"
+```
+
 
 ### Component values encapsulation
 Each component can have it's own values.
@@ -73,20 +125,6 @@ For e.g.
 }
 ```
 
-### Versioning
-Each component is versioned and placed in the following path:
-`{components_path}/{component_name}/{version}.json`
-
-Version is the optional arg. Lack of `version` will cause with taking always the latest one version of the component.
-
-```
-"type": "component",
-"args": {
-    "name": "footer",
-    "version" : "1.0.0"
-}
-```
-
 
 ## Using the Plugin
 
@@ -106,15 +144,21 @@ void main() {
   // Get an instance of the registry
   var registry = JsonWidgetRegistry.instance;
 
-  // Init component spec loader
-  var basePath = 'assets/components'
-  final loader = AssetComponentLoader(basePath);
-  ComponentSpecLoader.init(loader);
-  
   // Bind the plugin to the registry. This is necessary for the registry to
   // find the widget provided by the plugin
-  JsonComponentsPluginRegistrar.registerDefaults(registry: registry);
-
+  JsonComponentsPluginRegistrar.registerDefaults(registry: registry).withLoader(
+    CachedDependencyLoader(
+      cachedLoader: AssetDependencyLoader(
+        pathResolver: DirAssetPathResolver(
+          basePath: 'assets/components', // {components_path}
+          ext: Ext.json,
+          extByDependencyName: {
+            'centered_text': Ext.yaml,
+          },
+        ),
+      ),
+    ),
+  );
 
   // ...
 }

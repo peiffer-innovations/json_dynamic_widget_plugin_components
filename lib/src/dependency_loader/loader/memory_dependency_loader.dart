@@ -1,6 +1,7 @@
 import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 import 'package:json_dynamic_widget_plugin_components/json_dynamic_widget_plugin_components.dart';
 
+/// Loader that keeps the dependencies in memory
 class MemoryDependencyLoader implements DependencyLoader {
   MemoryDependencyLoader({required this.dependencyData});
 
