@@ -21,13 +21,15 @@ void main() async {
 
   final registry = JsonWidgetRegistry.instance;
   JsonComponentsPluginRegistrar.registerDefaults(registry: registry).withLoader(
-    AssetDependencyLoader(
-      pathResolver: DirAssetPathResolver(
-        basePath: 'assets/components',
-        ext: Ext.json,
-        extByDependencyName: {
-          'centered_text': Ext.yaml,
-        },
+    CachedDependencyLoader(
+      cachedLoader: AssetDependencyLoader(
+        pathResolver: DirAssetPathResolver(
+          basePath: 'assets/components',
+          ext: Ext.json,
+          extByDependencyName: {
+            'centered_text': Ext.yaml,
+          },
+        ),
       ),
     ),
   );
