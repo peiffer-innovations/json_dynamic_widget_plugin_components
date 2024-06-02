@@ -2,7 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [json\_dynamic\_widget\_plugin\_components](#json_dynamic_widget_plugin_components)
+- [json_dynamic_widget_plugin_components](#json_dynamic_widget_plugin_components)
   - [Table of Contents](#table-of-contents)
   - [Live Example](#live-example)
   - [Introduction](#introduction)
