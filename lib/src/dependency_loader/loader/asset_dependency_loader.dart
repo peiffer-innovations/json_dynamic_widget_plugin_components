@@ -3,7 +3,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../json_dynamic_widget_plugin_components.dart';
 
-/// Resolves the asset path from the dependency. Allows to define custom 
+/// Resolves the asset path from the dependency. Allows to define custom
 /// component spec files organization
 abstract class AssetPathResolver {
   String resolve(Dependency dependency);

@@ -10,6 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate
+        env:
+          LIBQUICKJSC_TEST_PATH: ${{ github.workspace }}/test/assets/libquickjs_c_bridge_plugin.so
+        uses: peiffer-innovations/actions-flutter-validate@v2
+        with:
+          generate_code: true
       - name: Dependencies
         uses: peiffer-innovations/actions-dart-dependency-updater@v1
         with:
