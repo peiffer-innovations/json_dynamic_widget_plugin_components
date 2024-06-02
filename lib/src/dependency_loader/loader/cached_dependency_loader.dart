@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../json_dynamic_widget_plugin_components.dart';
 
 /// Loader that caches the content of the child loader in the in-memory map.
-/// It allows to 
+/// It allows to
 class CachedDependencyLoader implements DependencyLoader {
   CachedDependencyLoader({required DependencyLoader cachedLoader})
       : _cachedLoader = cachedLoader;

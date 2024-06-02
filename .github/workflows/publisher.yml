@@ -26,7 +26,9 @@ jobs:
       - name: Validate
         env:
           LIBQUICKJSC_TEST_PATH: ${{ github.workspace }}/test/assets/libquickjs_c_bridge_plugin.so
-        uses: peiffer-innovations/actions-flutter-validate@v1
+        uses: peiffer-innovations/actions-flutter-validate@v2
+        with:
+          generate_code: true
 
       - name: Publish
         uses: peiffer-innovations/actions-pub-publish@v1.0.2
