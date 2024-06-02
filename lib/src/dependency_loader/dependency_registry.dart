@@ -2,7 +2,7 @@ import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 
 import '../../json_dynamic_widget_plugin_components.dart';
 
-/// A registry that holds the dependency loader and version resolver
+/// A registry that holds the used dependency loader and version resolver
 class DependencyRegistry {
   DependencyRegistry({
     required DependencyLoader loader,

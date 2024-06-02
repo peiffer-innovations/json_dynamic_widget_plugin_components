@@ -43,6 +43,8 @@ jobs:
         env:
           LIBQUICKJSC_TEST_PATH: ${{ github.workspace }}/test/assets/libquickjs_c_bridge_plugin.so
         uses: peiffer-innovations/actions-flutter-validate@v1
+        with:
+          generate_code: true
 
       - name: Web
         uses: peiffer-innovations/actions-flutter-deploy-pages@v1

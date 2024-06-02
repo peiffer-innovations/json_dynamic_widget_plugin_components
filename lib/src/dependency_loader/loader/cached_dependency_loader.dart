@@ -2,24 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../../../json_dynamic_widget_plugin_components.dart';
 
-class CachedRefLoader implements DependencyLoader {
-  CachedRefLoader({required DependencyLoader cachedLoader})
+/// Loader that caches the content of the child loader in the in-memory map.
+/// It allows to
+class CachedDependencyLoader implements DependencyLoader {
+  CachedDependencyLoader({required DependencyLoader cachedLoader})
       : _cachedLoader = cachedLoader;
 
   final DependencyLoader _cachedLoader;
   final Map<Dependency, String> _cachedData = {};
 
   @override
-  Future<String?> load(Dependency ref, BuildContext context) async {
-    String? refData;
-    if (_cachedData.containsKey(ref)) {
-      refData = _cachedData[ref]!;
+  Future<String?> load(Dependency dependency, BuildContext context) async {
+    String? dependencyData;
+    if (_cachedData.containsKey(dependency)) {
+      dependencyData = _cachedData[dependency]!;
     } else {
-      refData = await _cachedLoader.load(ref, context);
-      if (refData != null && refData.isNotEmpty) {
-        _cachedData[ref] = refData;
+      dependencyData = await _cachedLoader.load(dependency, context);
+      if (dependencyData != null && dependencyData.isNotEmpty) {
+        _cachedData[dependency] = dependencyData;
       }
     }
-    return refData;
+    return dependencyData;
   }
 }

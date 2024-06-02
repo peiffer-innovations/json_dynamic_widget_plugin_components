@@ -3,10 +3,13 @@ import 'package:path/path.dart' as path;
 
 import '../../../json_dynamic_widget_plugin_components.dart';
 
+/// Resolves the asset path from the dependency. Allows to define custom
+/// component spec files organization
 abstract class AssetPathResolver {
   String resolve(Dependency dependency);
 }
 
+/// Supported extensions for component spec files
 class Ext {
   static const json = '.json';
   static const yaml = '.yaml';
@@ -41,6 +44,7 @@ class DirAssetPathResolver extends AssetPathResolver {
   }
 }
 
+/// Loader that loads the dependency from the asset bundle
 class AssetDependencyLoader implements DependencyLoader {
   AssetDependencyLoader({required this.pathResolver});
 
