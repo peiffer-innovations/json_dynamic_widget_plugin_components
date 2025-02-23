@@ -33,8 +33,9 @@ class _Component extends StatefulWidget {
 }
 
 class _ComponentState extends State<_Component> {
-  static final JsonWidgetRegistry _componentParent =
-      JsonWidgetRegistry(debugLabel: 'component_parent');
+  static final JsonWidgetRegistry _componentParent = JsonWidgetRegistry(
+    debugLabel: 'component_parent',
+  );
 
   final List<StreamSubscription<WidgetValueChanged>> _inputSubscriptions = [];
   final List<StreamSubscription<WidgetValueChanged>> _outputSubscriptions = [];
@@ -47,10 +48,7 @@ class _ComponentState extends State<_Component> {
   Widget build(BuildContext context) {
     return _componentData == null
         ? const SizedBox()
-        : _componentData!.build(
-            context: context,
-            registry: _componentRegistry,
-          );
+        : _componentData!.build(context: context, registry: _componentRegistry);
   }
 
   @override
@@ -111,11 +109,15 @@ class _ComponentState extends State<_Component> {
     var version = '';
     if (context.mounted) {
       version = await dependencyRegistry.resolveVersion(
-          widget.name, widget.version, context);
+        widget.name,
+        widget.version,
+        context,
+      );
     }
     if (version.isEmpty) {
       throw Exception(
-          'Unable to resolve version for component: ${widget.name}:${widget.version ?? ''}');
+        'Unable to resolve version for component: ${widget.name}:${widget.version ?? ''}',
+      );
     }
     final dependency = Dependency(name: widget.name, version: version);
 
@@ -126,11 +128,13 @@ class _ComponentState extends State<_Component> {
 
     if (componentSpecStr == null || componentSpecStr.isEmpty) {
       throw Exception(
-          'Unable to load component: ${widget.name}:${widget.version ?? ''}');
+        'Unable to load component: ${widget.name}:${widget.version ?? ''}',
+      );
     }
 
     final componentSpecJson = Map<String, dynamic>.from(
-        yaon.parse(componentSpecStr, normalize: true));
+      yaon.parse(componentSpecStr, normalize: true),
+    );
 
     final componentSpec = ComponentSpec.fromJson(componentSpecJson);
 
@@ -139,22 +143,17 @@ class _ComponentState extends State<_Component> {
       values: {},
       parent: _componentParent,
     );
-    _prepareInputs(componentSpec.inputs).forEach(
-      (name, rawValue) {
-        final processedValue = callerRegistry.processArgs(rawValue, null);
-        _componentRegistry.setValue(name, processedValue.value);
+    _prepareInputs(componentSpec.inputs).forEach((name, rawValue) {
+      final processedValue = callerRegistry.processArgs(rawValue, null);
+      _componentRegistry.setValue(name, processedValue.value);
 
-        _addInputSubscriptions(
-          name,
-          rawValue,
-          callerRegistry,
-          processedValue,
-        );
-      },
-    );
+      _addInputSubscriptions(name, rawValue, callerRegistry, processedValue);
+    });
 
-    _prepareOutputs(componentSpec.outputs)
-        .forEach((componentOutputName, callerOutputName) {
+    _prepareOutputs(componentSpec.outputs).forEach((
+      componentOutputName,
+      callerOutputName,
+    ) {
       _addOutputSubscription(
         componentOutputName,
         callerOutputName,
@@ -164,10 +163,11 @@ class _ComponentState extends State<_Component> {
 
     if (mounted) {
       setState(
-        () => _componentData = JsonWidgetData.fromDynamic(
-          componentSpec.content,
-          registry: _componentRegistry,
-        ),
+        () =>
+            _componentData = JsonWidgetData.fromDynamic(
+              componentSpec.content,
+              registry: _componentRegistry,
+            ),
       );
     }
   }
@@ -179,8 +179,9 @@ class _ComponentState extends State<_Component> {
     for (var inputSpec in inputSpecs) {
       var value = inputSpec.defaultValue ?? '';
       if (widget.inputs.containsKey(inputSpec.name)) {
-        value = widget.data.jsonWidgetArgs[ComponentSpec.inputsKey]
-            [inputSpec.name]!;
+        value =
+            widget.data.jsonWidgetArgs[ComponentSpec.inputsKey][inputSpec
+                .name]!;
       }
       inputs[inputSpec.name] = value;
     }
@@ -204,9 +205,7 @@ class _ComponentState extends State<_Component> {
 /// Loads the component based on the JSON structure.
 @jsonWidget
 abstract class _JsonComponentBuilder extends JsonWidgetBuilder {
-  const _JsonComponentBuilder({
-    required super.args,
-  });
+  const _JsonComponentBuilder({required super.args});
 
   @override
   _Component buildCustom({

@@ -35,10 +35,7 @@ void main() {
       final context = MockBuildContext();
 
       // when/then
-      expect(
-        () => resolver.resolve(name, version, context),
-        throwsException,
-      );
+      expect(() => resolver.resolve(name, version, context), throwsException);
     });
 
     test('should throw an exception if version is empty', () async {
@@ -48,10 +45,7 @@ void main() {
       final context = MockBuildContext();
 
       // when/then
-      expect(
-        () => resolver.resolve(name, version, context),
-        throwsException,
-      );
+      expect(() => resolver.resolve(name, version, context), throwsException);
     });
   });
 }

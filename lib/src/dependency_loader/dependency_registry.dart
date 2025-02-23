@@ -7,8 +7,8 @@ class DependencyRegistry {
   DependencyRegistry({
     required DependencyLoader loader,
     required DependencyVersionResolver versionResolver,
-  })  : _loader = loader,
-        _versionResolver = versionResolver;
+  }) : _loader = loader,
+       _versionResolver = versionResolver;
 
   static final DependencyRegistry _instance = DependencyRegistry(
     loader: MemoryDependencyLoader(dependencyData: {}),

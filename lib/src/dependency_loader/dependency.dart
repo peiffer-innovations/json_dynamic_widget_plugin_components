@@ -2,10 +2,7 @@ import 'package:json_dynamic_widget/json_dynamic_widget.dart';
 
 @immutable
 class Dependency {
-  const Dependency({
-    required this.name,
-    required this.version,
-  });
+  const Dependency({required this.name, required this.version});
 
   final String name;
   final String version;

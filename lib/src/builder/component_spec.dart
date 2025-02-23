@@ -15,18 +15,26 @@ class ComponentSpec extends JsonClass {
     return ComponentSpec(
       name: json[nameKey]!,
       version: json[versionKey]!,
-      inputs: json[inputsKey] != null
-          ? (json[inputsKey] as List<dynamic>)
-              .map((inputSpecRaw) =>
-                  InputSpec.fromJson(Map<String, dynamic>.from(inputSpecRaw)))
-              .toList()
-          : [],
-      outputs: json[outputsKey] != null
-          ? (json[outputsKey] as List<dynamic>)
-              .map((outputSpecRaw) =>
-                  OutputSpec.fromJson(Map<String, dynamic>.from(outputSpecRaw)))
-              .toList()
-          : [],
+      inputs:
+          json[inputsKey] != null
+              ? (json[inputsKey] as List<dynamic>)
+                  .map(
+                    (inputSpecRaw) => InputSpec.fromJson(
+                      Map<String, dynamic>.from(inputSpecRaw),
+                    ),
+                  )
+                  .toList()
+              : [],
+      outputs:
+          json[outputsKey] != null
+              ? (json[outputsKey] as List<dynamic>)
+                  .map(
+                    (outputSpecRaw) => OutputSpec.fromJson(
+                      Map<String, dynamic>.from(outputSpecRaw),
+                    ),
+                  )
+                  .toList()
+              : [],
       content: Map<String, dynamic>.from(json[contentKey]),
     );
   }
@@ -62,10 +70,10 @@ class InputSpec extends JsonClass {
     required this.name,
   });
   factory InputSpec.fromJson(Map<String, dynamic> json) => InputSpec(
-        defaultValue: json[defaultValueKey]!,
-        description: json[descriptionKey]!,
-        name: json[nameKey]!,
-      );
+    defaultValue: json[defaultValueKey]!,
+    description: json[descriptionKey]!,
+    name: json[nameKey]!,
+  );
 
   static const defaultValueKey = 'defaultValue';
   static const descriptionKey = 'description';
@@ -86,14 +94,9 @@ class InputSpec extends JsonClass {
 }
 
 class OutputSpec extends JsonClass {
-  OutputSpec({
-    required this.description,
-    required this.name,
-  });
-  factory OutputSpec.fromJson(Map<String, dynamic> json) => OutputSpec(
-        description: json[descriptionKey]!,
-        name: json[nameKey]!,
-      );
+  OutputSpec({required this.description, required this.name});
+  factory OutputSpec.fromJson(Map<String, dynamic> json) =>
+      OutputSpec(description: json[descriptionKey]!, name: json[nameKey]!);
 
   static const descriptionKey = 'description';
   static const nameKey = 'name';
@@ -103,9 +106,6 @@ class OutputSpec extends JsonClass {
 
   @override
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      descriptionKey: description,
-      nameKey: name,
-    };
+    return <String, dynamic>{descriptionKey: description, nameKey: name};
   }
 }

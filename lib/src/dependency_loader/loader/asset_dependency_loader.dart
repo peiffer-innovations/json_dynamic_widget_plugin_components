@@ -17,17 +17,17 @@ class Ext {
 
 /// Resolves the asset path based on the dependency name and version
 /// It expects the following directory structure:
-/// <basePath>/
-///   -> <dependency_name>
-///      -> <dependency_version><ext>
+/// base_path/
+///   -> dependency_name
+///      -> dependency_version.[json|yaml]
 class DirAssetPathResolver extends AssetPathResolver {
   DirAssetPathResolver({
     required String basePath,
     String ext = Ext.json,
     Map<String, String>? extByDependencyName,
-  })  : _basePath = basePath,
-        _ext = ext,
-        _extByDependencyName = extByDependencyName ?? {};
+  }) : _basePath = basePath,
+       _ext = ext,
+       _extByDependencyName = extByDependencyName ?? {};
 
   final String _basePath;
   final String _ext;

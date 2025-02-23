@@ -8,6 +8,10 @@
 * Tests
 * Docs
 
+## [1.1.0] - February 23th, 2025
+
+* Upgraded to support JDW 9.0.0 and newer sdk
+
 
 
 

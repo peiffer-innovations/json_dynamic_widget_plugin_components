@@ -12,7 +12,8 @@ abstract class _JsonComponentsPluginRegistrar {
   }
 
   _JsonComponentsPluginRegistrar withVersionResolver(
-      DependencyVersionResolver versionResolver) {
+    DependencyVersionResolver versionResolver,
+  ) {
     DependencyRegistry.instance.versionResolver = versionResolver;
     return this;
   }

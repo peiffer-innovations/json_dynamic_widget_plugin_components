@@ -6,7 +6,7 @@ import '../../../json_dynamic_widget_plugin_components.dart';
 /// It allows to
 class CachedDependencyLoader implements DependencyLoader {
   CachedDependencyLoader({required DependencyLoader cachedLoader})
-      : _cachedLoader = cachedLoader;
+    : _cachedLoader = cachedLoader;
 
   final DependencyLoader _cachedLoader;
   final Map<Dependency, String> _cachedData = {};
